@@ -95,3 +95,4 @@ plt.show()
 
 
 # PROJECT DUE APRIL 20TH!!!
+# Do not forget to keep separate user data and training data.
