@@ -112,9 +112,9 @@ while True:
         # Display results with true class name
         plt.figure(figsize=(6, 3))
         plt.subplot(1, 2, 1)
-        plot_image(predictions[0], true_label, img)  # Pass true_label instead of np.argmax(predictions[0])
+        plot_image(predictions[0], true_label, img) 
         plt.subplot(1, 2, 2)
-        plot_value_array(predictions[0], true_label)  # Pass true_label instead of np.argmax(predictions[0])
+        plot_value_array(predictions[0], true_label)  
         plt.show()
     else:
         print("Invalid file path!!!")
