@@ -1,44 +1,84 @@
 # TensorFlow and tf.keras
 import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 # Helper libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import os
+from sklearn.model_selection import train_test_split
 
 # importing sample data from a dataset
-fashion_mnist = tf.keras.datasets.fashion_mnist
-
-# separates data into training and testing sets
-(train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
+crocodilian_dir = 'crocodilian_images'
 
 # names of outcome classes
-class_names = ['T-Shirt', 'Trousers', 'Pullover', 'Dress', 'Coat',
-               'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle-Boot']
+class_names = ['crocodile', 'alligator', 'caiman', 'gharial']
 
-# Resize images to 56x56
-train_images_resized = np.array([cv2.resize(img, (56, 56)) for img in train_images])
-test_images_resized = np.array([cv2.resize(img, (56, 56)) for img in test_images])
+# Define image data generator with data splitting
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    validation_split=0.2  # Split dataset into training and validation sets
+)
 
-# Normalize pixel values
-train_images_resized = train_images_resized / 255.0
-test_images_resized = test_images_resized / 255.0
+# Load and preprocess crocodilian images
+generator = datagen.flow_from_directory(
+    crocodilian_dir,
+    target_size=(256, 256),   
+    batch_size=20,
+    class_mode='categorical',  # Use categorical labels
+    shuffle=True             # Shuffle images for training
+)
+
+# Extract images and labels from generator
+train_images, train_labels = [], []
+for _ in range(len(generator)):
+    images, labels = next(generator)
+    train_images.extend(images)
+    train_labels.extend(labels)
+
+# Convert lists to numpy arrays
+train_images = np.array(train_images)
+train_labels = np.array(train_labels)
+
+# Split data into training and validation sets
+train_images, validation_images, train_labels, validation_labels = train_test_split(
+    train_images,
+    train_labels,
+    test_size=0.2,  # Adjust test size as needed
+    stratify=train_labels,  # Preserve class distribution
+    random_state=42  # Set random state for reproducibility
+)
+
+# Further split validation set into validation and testing sets
+validation_images, test_images, validation_labels, test_labels = train_test_split(
+    validation_images,
+    validation_labels,
+    test_size=0.5,  # 50% of validation set for testing
+    stratify=validation_labels,
+    random_state=42
+)
 
 # Machine learning model
 model = tf.keras.Sequential([
-    tf.keras.layers.Flatten(input_shape=(56, 56)),
+    tf.keras.layers.Input(shape=(256, 256, 3)),  # Input layer with shape (256, 256, 3)
+    tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.MaxPooling2D((2, 2)),
+    tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+    tf.keras.layers.Flatten(),
     tf.keras.layers.Dense(128, activation='relu'),
-    tf.keras.layers.Dense(10)
+    tf.keras.layers.Dense(4)  # Adjust the number of units to match the number of classes
 ])
 
 model.compile(optimizer='adam',
-              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
               metrics=['accuracy'])
 
-# beginning of training and testing the model using Epochs
-model.fit(train_images_resized, train_labels, epochs=10, validation_split=0.2)
-test_loss, test_acc = model.evaluate(test_images_resized,  test_labels, verbose=2)
+# Training the model
+model.fit(train_images, train_labels, epochs=10, validation_data=(validation_images, validation_labels))
+test_loss, test_acc = model.evaluate(test_images,  test_labels, verbose=2)
 print('\nTest accuracy:', test_acc)
 
 # creates the probability model
@@ -46,10 +86,10 @@ probability_model = tf.keras.Sequential([model,
                                          tf.keras.layers.Softmax()])
 
 # some sample predictions
-predictions = probability_model.predict(test_images_resized)
+predictions = probability_model.predict(test_images)
 
 # plotting functions to display results
-def plot_image(predictions_array, true_label, img):
+def plot_image(predictions_array, true_label, img, class_names):
     plt.grid(False)
     plt.xticks([])
     plt.yticks([])
@@ -67,11 +107,11 @@ def plot_image(predictions_array, true_label, img):
                                           class_names[true_label]),
                                           color=color)
 
-def plot_value_array(predictions_array, true_label):
+def plot_value_array(predictions_array, true_label, class_names):
     plt.grid(False)
-    plt.xticks(range(10))
+    plt.xticks(range(4))
     plt.yticks([])
-    thisplot = plt.bar(range(10), predictions_array, color="#777777")
+    thisplot = plt.bar(range(4), predictions_array, color="#777777")
     plt.ylim([0, 1])
     predicted_label = np.argmax(predictions_array)
 
@@ -87,8 +127,8 @@ while True:
 
     if os.path.exists(file_path):
         # Load and preprocess the image
-        img = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)  # Load as grayscale
-        img = cv2.resize(img, (56, 56))  # Resize to match model input shape
+        img = cv2.imread(file_path)  # Load as grayscale
+        img = cv2.resize(img, (256, 256))  # Resize to match model input shape
         img = img / 255.0  # Normalize pixel values
 
         # Reshape image to match model input shape
@@ -112,12 +152,9 @@ while True:
         # Display results with true class name
         plt.figure(figsize=(6, 3))
         plt.subplot(1, 2, 1)
-        plot_image(predictions[0], true_label, img) 
+        plot_image(predictions[0], true_label, img, class_names) 
         plt.subplot(1, 2, 2)
-        plot_value_array(predictions[0], true_label)  
+        plot_value_array(predictions[0], true_label, class_names)  
         plt.show()
     else:
         print("Invalid file path!!!")
-
-# PROJECT DUE APRIL 24TH!!!
-# Do not forget to keep separate user data and training data.
