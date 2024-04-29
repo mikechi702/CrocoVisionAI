@@ -9,6 +9,7 @@ import cv2
 import os
 from sklearn.model_selection import train_test_split
 
+
 # importing sample data from a dataset
 crocodilian_dir = 'crocodilian_images'
 
@@ -117,44 +118,47 @@ def plot_value_array(predictions_array, true_label, class_names):
 
     thisplot[predicted_label].set_color('red')
     thisplot[true_label].set_color('blue')
+    
+def classify_file(file_path):
+    # Load and preprocess the image
+    img = cv2.imread(file_path)  # Load as grayscale
+    img = cv2.resize(img, (256, 256))  # Resize to match model input shape
+    img = img / 255.0  # Normalize pixel values
+
+    # Reshape image to match model input shape
+    img = np.expand_dims(img, axis=0)
+
+    # Classify the image
+    predictions = probability_model.predict(img)
+
+    if isinstance(predictions[0], np.ndarray) and len(predictions[0]) == 10:
+            predictions_array = predictions[0]
+
+    # Ensure img is a single image array
+    if isinstance(img, np.ndarray) and len(img) > 0:
+            img = img[0]
+
+    # Extract true class label from the file name
+    file_name = os.path.basename(file_path)
+    class_name = file_name.split('-')[0]  # Extract class name from filename
+    true_label = class_names.index(class_name) 
+
+    # Display results with true class name
+    plt.figure(figsize=(6, 3))
+    plt.subplot(1, 2, 1)
+    plot_image(predictions[0], true_label, img, class_names) 
+    plt.subplot(1, 2, 2)
+    plot_value_array(predictions[0], true_label, class_names)  
+    plt.show()
 
 # Prompt for file path
 while True:
-    file_path = input("Enter the file path or filename of the image (or type 'exit' to quit): ")
+    file_path = input("\nEnter the file path for the image (or type 'exit' to quit): ")
 
     if file_path.lower() == 'exit':
         break  # Exit the loop if the user types 'exit'
 
     if os.path.exists(file_path):
-        # Load and preprocess the image
-        img = cv2.imread(file_path)  # Load as grayscale
-        img = cv2.resize(img, (256, 256))  # Resize to match model input shape
-        img = img / 255.0  # Normalize pixel values
-
-        # Reshape image to match model input shape
-        img = np.expand_dims(img, axis=0)
-
-        # Classify the image
-        predictions = probability_model.predict(img)
-
-        if isinstance(predictions[0], np.ndarray) and len(predictions[0]) == 10:
-            predictions_array = predictions[0]
-
-        # Ensure img is a single image array
-        if isinstance(img, np.ndarray) and len(img) > 0:
-            img = img[0]
-
-        # Extract true class label from the file name
-        file_name = os.path.basename(file_path)
-        class_name = file_name.split('_')[0]  # Extract class name from filename
-        true_label = class_names.index(class_name)  # Get the index of the class name in class_names
-
-        # Display results with true class name
-        plt.figure(figsize=(6, 3))
-        plt.subplot(1, 2, 1)
-        plot_image(predictions[0], true_label, img, class_names) 
-        plt.subplot(1, 2, 2)
-        plot_value_array(predictions[0], true_label, class_names)  
-        plt.show()
+        classify_file(file_path)
     else:
         print("Invalid file path!!!")

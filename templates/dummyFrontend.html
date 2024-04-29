@@ -3,41 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Upload</title>
+    <title>Upload File</title>
 </head>
 <body>
-    <h1>Upload your image (accepts .jpg and .png formats)</h1>
-    <input type="file" id="fileInput" accept=".jpg,.png" />
-    <button id="uploadBtn">Upload</button>
-    <div id="fileName"></div>
+    <h1>Upload an Image</h1>
+    <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" id="file-input" accept=".jpg, .jpeg, .png">
+        <button type="button" onclick="uploadFile()">Upload</button>
+    </form>
+
+    <!-- Display the classified image and results here -->
+    <div id="image-container"></div>
 
     <script>
-        document.getElementById('uploadBtn').addEventListener('click', function() {
-            var fileInput = document.getElementById('fileInput');
+        // Function to upload the file and display the classified image and results
+        function uploadFile() {
+            var fileInput = document.getElementById("file-input");
             var file = fileInput.files[0];
-            if (file) {
-                var fileSize = file.size / (1024 * 1024); // Convert to MB
-                if (fileSize <= 50) {
-                    var formData = new FormData();
-                    formData.append('file', file);
+            var formData = new FormData();
+            formData.append("file", file);
 
-                    fetch('/upload', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('fileName').textContent = data.fileName;
-                    })
-                    .catch(error => console.error('Error uploading file:', error));
-                } else {
-                    alert('File size exceeds the limit (50 MB).');
-                }
-            } else {
-                alert('Please select a file.');
-            }
-        });
+            // Send a POST request to the server to upload the file
+            fetch("/", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the classified image and results
+                displayImage(data.image_url);
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        // Function to display the classified image and results
+        function displayImage(imageUrl) {
+            // Create an <img> element to display the image
+            var imgElement = document.createElement("img");
+            imgElement.src = imageUrl;
+
+            // Append the image element to the image-container div
+            var imageContainer = document.getElementById("image-container");
+            imageContainer.appendChild(imgElement);
+        }
     </script>
 </body>
 </html>
+
 
