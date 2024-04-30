@@ -8,12 +8,13 @@ Croco Vision AI is a simple image classification Convolutional Neural Network (C
 2. Set up your python environment
 - (Optional): Create a virtual environment with venv.
 3. Run <pip install -r requirements.txt> in your python environment to download libraries and dependencies
-4. In the root project directory, run python neuralnet.py
+4. In the root project directory, run python neuralnet.py in the command line interface.
 5. Wait for the neural network to load
 6. When prompted to enter a file path, enter a file path of an image for the CNN (.jpg and .png formats supported) (example in <>'s: <**inputs/alligator-1.jpg**>)
  - A small popup window containing your input image and a bar graph of the class labels will appear.
  - Sample images can be found in the 'inputs' folder.
  - To exit the program, type 'exit' in the input loop
+ - When adding new images in inputs/, follow the naming scheme of <**speciesname-#.jpg**>
 
 ## Technologies
 - Python: Used as the main programming language to build the Neural Net.
